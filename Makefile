@@ -166,6 +166,10 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 manifests-release: generate manifests kustomize ## Generate the consolidated install.yaml with the release tag.
 	./hack/manifests-release.sh $(KUSTOMIZE) $(IMAGE_TAG)
 
+.PHONY: helm
+helm: helmify manifests kustomize
+	$(KUSTOMIZE) build config/default | $(HELMIFY) -crd-dir charts/gitops-promoter
+
 ##@ Deployment
 
 ifndef ignore-not-found
@@ -206,6 +210,7 @@ MOCKERY = $(LOCALBIN)/mockery-$(MOCKERY_VERSION)
 NILAWAY = $(LOCALBIN)/nilaway-$(NILAWAY_VERSION)
 GINKGO = $(LOCALBIN)/ginkgo-$(GINKGO_VERSION)
 GORELEASER ?= $(LOCALBIN)/goreleaser-$(GORELEASER_VERSION)
+HELMIFY ?= $(LOCALBIN)/helmify
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.3.0
@@ -216,6 +221,8 @@ MOCKERY_VERSION ?= v2.42.2
 NILAWAY_VERSION ?= latest
 GINKGO_VERSION=$(shell go list -m all | grep github.com/onsi/ginkgo/v2 | awk '{print $$2}')
 GORELEASER_VERSION ?= v2.6.1
+HELMIFY_VERSION ?= v0.4.18
+
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
 $(KUSTOMIZE): $(LOCALBIN)
@@ -256,6 +263,10 @@ ginkgo:
 goreleaser: $(GORELEASER)
 $(GORELEASER): $(LOCALBIN)
 	$(call go-install-tool,$(GORELEASER),github.com/goreleaser/goreleaser/v2,$(GORELEASER_VERSION))
+
+.PHONY: helmify
+helmify:
+	$(call go-install-tool,$(HELMIFY),github.com/arttor/helmify/cmd/helmify,$(HELMIFY_VERSION))
 
 # go-install-tool will 'go install' any package with custom target and name of binary, if it doesn't exist
 # $1 - target path with name of binary (ideally with version)

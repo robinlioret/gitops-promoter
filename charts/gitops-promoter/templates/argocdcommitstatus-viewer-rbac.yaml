@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "gitops-promoter.fullname" . }}-argocdcommitstatus-viewer-role
+  labels:
+  {{- include "gitops-promoter.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - promoter.argoproj.io
+  resources:
+  - argocdcommitstatuses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - promoter.argoproj.io
+  resources:
+  - argocdcommitstatuses/status
+  verbs:
+  - get

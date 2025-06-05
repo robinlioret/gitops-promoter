@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "gitops-promoter.fullname" . }}-controllerconfiguration-viewer-role
+  labels:
+  {{- include "gitops-promoter.labels" . | nindent 4 }}
+rules:
+- apiGroups:
+  - promoter.argoproj.io
+  resources:
+  - controllerconfigurations
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - promoter.argoproj.io
+  resources:
+  - controllerconfigurations/status
+  verbs:
+  - get

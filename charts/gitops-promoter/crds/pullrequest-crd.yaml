@@ -1,0 +1,121 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: pullrequests.promoter.argoproj.io
+spec:
+  group: promoter.argoproj.io
+  names:
+    kind: PullRequest
+    listKind: PullRequestList
+    plural: pullrequests
+    singular: pullrequest
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.id
+      name: ID
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PullRequest is the Schema for the pullrequests API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PullRequestSpec defines the desired state of PullRequest
+            properties:
+              description:
+                description: Body the description body of the pull/merge request
+                type: string
+              gitRepositoryRef:
+                description: RepositoryReference what repository to open the PR on.
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              sourceBranch:
+                description: Base the git reference that we are merging into Head
+                  ---> Base
+                type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
+              state:
+                default: open
+                description: State of the merge request closed/merged/open
+                enum:
+                - closed
+                - merged
+                - open
+                type: string
+              targetBranch:
+                description: Head the git reference we are merging from Head --->
+                  Base
+                type: string
+                x-kubernetes-validations:
+                - message: Value is immutable
+                  rule: self == oldSelf
+              title:
+                description: Title is the title of the pull request.
+                type: string
+            required:
+            - gitRepositoryRef
+            - sourceBranch
+            - state
+            - targetBranch
+            - title
+            type: object
+          status:
+            description: PullRequestStatus defines the observed state of PullRequest
+            properties:
+              id:
+                description: ID the id of the pull request
+                type: string
+              observedGeneration:
+                description: ObservedGeneration the generation observed by the controller
+                format: int64
+                type: integer
+              prCreationTime:
+                description: PRCreationTime the time the PR was created
+                format: date-time
+                type: string
+              state:
+                description: State of the merge request closed/merged/open
+                enum:
+                - ""
+                - closed
+                - merged
+                - open
+                type: string
+            required:
+            - observedGeneration
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+

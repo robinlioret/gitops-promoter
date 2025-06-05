@@ -1,0 +1,272 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.3
+  name: promotionstrategies.promoter.argoproj.io
+spec:
+  group: promoter.argoproj.io
+  names:
+    kind: PromotionStrategy
+    listKind: PromotionStrategyList
+    plural: promotionstrategies
+    singular: promotionstrategy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.active.dry.sha
+      name: Active Dry Sha
+      type: string
+    - jsonPath: .status.proposed.dry.sha
+      name: Proposed Dry Sha
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: PromotionStrategy is the Schema for the promotionstrategies API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PromotionStrategySpec defines the desired state of PromotionStrategy
+            properties:
+              activeCommitStatuses:
+                description: |-
+                  ActiveCommitStatuses are commit statuses describing an actively running dry commit. If an active commit status
+                  is failing for an environment, subsequent environments will not deploy the failing commit.
+
+                  The commit statuses specified in this field apply to all environments in the promotion sequence. You can also
+                  specify commit statuses for individual environments in the `environments` field.
+                items:
+                  properties:
+                    key:
+                      pattern: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
+                      type: string
+                  required:
+                  - key
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - key
+                x-kubernetes-list-type: map
+              environments:
+                description: Environments is the sequence of environments that a dry
+                  commit will be promoted through.
+                items:
+                  properties:
+                    activeCommitStatuses:
+                      description: |-
+                        ActiveCommitStatuses are commit statuses describing an actively running dry commit. If an active commit status
+                        is failing for an environment, subsequent environments will not deploy the failing commit.
+
+                        The commit statuses specified in this field apply to this environment only. You can also specify commit statuses
+                        for all environments in the `spec.activeCommitStatuses` field.
+                      items:
+                        properties:
+                          key:
+                            pattern: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
+                            type: string
+                        required:
+                        - key
+                        type: object
+                      type: array
+                      x-kubernetes-list-map-keys:
+                      - key
+                      x-kubernetes-list-type: map
+                    autoMerge:
+                      default: true
+                      description: |-
+                        AutoMerge determines whether the dry commit should be automatically merged into the next branch in the sequence.
+                        If false, the dry commit will be proposed but not merged.
+                      type: boolean
+                    branch:
+                      type: string
+                    proposedCommitStatuses:
+                      description: |-
+                        ProposedCommitStatuses are commit statuses describing a proposed dry commit, i.e. one that is not yet running
+                        in a live environment. If a proposed commit status is failing for a given environment, the dry commit will not
+                        be promoted to that environment.
+
+                        The commit statuses specified in this field apply to this environment only. You can also specify commit statuses
+                        for all environments in the `spec.proposedCommitStatuses` field.
+                      items:
+                        properties:
+                          key:
+                            pattern: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
+                            type: string
+                        required:
+                        - key
+                        type: object
+                      type: array
+                      x-kubernetes-list-map-keys:
+                      - key
+                      x-kubernetes-list-type: map
+                  required:
+                  - branch
+                  type: object
+                minItems: 1
+                type: array
+                x-kubernetes-list-map-keys:
+                - branch
+                x-kubernetes-list-type: map
+              gitRepositoryRef:
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+                type: object
+              proposedCommitStatuses:
+                description: |-
+                  ProposedCommitStatuses are commit statuses describing a proposed dry commit, i.e. one that is not yet running
+                  in a live environment. If a proposed commit status is failing for a given environment, the dry commit will not
+                  be promoted to that environment.
+
+                  The commit statuses specified in this field apply to all environments in the promotion sequence. You can also
+                  specify commit statuses for individual environments in the `environments` field.
+                items:
+                  properties:
+                    key:
+                      pattern: (([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])?
+                      type: string
+                  required:
+                  - key
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - key
+                x-kubernetes-list-type: map
+            required:
+            - environments
+            - gitRepositoryRef
+            type: object
+          status:
+            description: PromotionStrategyStatus defines the observed state of PromotionStrategy
+            properties:
+              environments:
+                items:
+                  properties:
+                    active:
+                      properties:
+                        commitStatus:
+                          properties:
+                            phase:
+                              enum:
+                              - pending
+                              - success
+                              - failure
+                              type: string
+                            sha:
+                              type: string
+                          required:
+                          - phase
+                          - sha
+                          type: object
+                        dry:
+                          properties:
+                            commitTime:
+                              format: date-time
+                              type: string
+                            sha:
+                              type: string
+                          type: object
+                        hydrated:
+                          properties:
+                            commitTime:
+                              format: date-time
+                              type: string
+                            sha:
+                              type: string
+                          type: object
+                      required:
+                      - commitStatus
+                      - dry
+                      - hydrated
+                      type: object
+                    branch:
+                      type: string
+                    lastHealthyDryShas:
+                      items:
+                        properties:
+                          sha:
+                            type: string
+                          time:
+                            description: 'FIXME: docs, is this commit time, first-became-healthy
+                              time, most-recently-observed-healthy time, etc?'
+                            format: date-time
+                            type: string
+                        required:
+                        - sha
+                        - time
+                        type: object
+                      type: array
+                    proposed:
+                      properties:
+                        commitStatus:
+                          properties:
+                            phase:
+                              enum:
+                              - pending
+                              - success
+                              - failure
+                              type: string
+                            sha:
+                              type: string
+                          required:
+                          - phase
+                          - sha
+                          type: object
+                        dry:
+                          properties:
+                            commitTime:
+                              format: date-time
+                              type: string
+                            sha:
+                              type: string
+                          type: object
+                        hydrated:
+                          properties:
+                            commitTime:
+                              format: date-time
+                              type: string
+                            sha:
+                              type: string
+                          type: object
+                      required:
+                      - commitStatus
+                      - dry
+                      - hydrated
+                      type: object
+                  required:
+                  - active
+                  - branch
+                  - proposed
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - branch
+                x-kubernetes-list-type: map
+            required:
+            - environments
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+

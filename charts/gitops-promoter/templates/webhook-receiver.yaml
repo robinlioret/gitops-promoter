@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gitops-promoter.fullname" . }}-webhook-receiver
+  labels:
+  {{- include "gitops-promoter.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.webhookReceiver.type }}
+  selector:
+    control-plane: controller-manager
+    {{- include "gitops-promoter.selectorLabels" . | nindent 4 }}
+  ports:
+  {{- .Values.webhookReceiver.ports | toYaml | nindent 2 }}
